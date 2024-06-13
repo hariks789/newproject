@@ -10,7 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@pubnub/chat": "^0.6.2",
+    "@pubnub/chat": "^0.7.2",
     "react": "18.2.0",
     "react-native": "0.71.18"
   },
