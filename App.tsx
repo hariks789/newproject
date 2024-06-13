@@ -1,3 +1,4 @@
+/* eslint-disable no-catch-shadow */
 /**
  * Sample React Native App
  * https://github.com/facebook/react-native
@@ -5,62 +6,58 @@
  * @format
  */
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import {Chat} from '@pubnub/chat';
+import React, {useEffect, useState} from 'react';
 import {
+  Button,
   SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
+  useColorScheme,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+import {Colors, Header} from 'react-native/Libraries/NewAppScreen';
+import {getKeys} from './keys';
 
 function App(): JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
+  const [chatInstance, setChat] = useState<Chat>();
+  const [error, setError] = useState('');
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
+
+  async function init() {
+    try {
+      const config = await getKeys();
+
+      const chat = await Chat.init({
+        ...config,
+      });
+
+      console.log('chat', chat);
+
+      if (!chat) {
+        return;
+      }
+
+      setChat(chat);
+    } catch (err) {
+      console.log(err);
+      setError(JSON.stringify(err));
+    }
+  }
+
+  useEffect(() => {
+    // Temp flag for turning off authnz
+
+    init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <SafeAreaView style={backgroundStyle}>
@@ -72,34 +69,25 @@ function App(): JSX.Element {
         contentInsetAdjustmentBehavior="automatic"
         style={backgroundStyle}>
         <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
       </ScrollView>
+      <View style={styles.sectionContainer}>
+        {/* <Text style={styles.sectionDescription}>{JSON.stringify(config)}</Text> */}
+
+        <Text style={styles.sectionDescription}>{error ? error : null}</Text>
+        <Text style={styles.sectionDescription}>
+          Connected User ID:{' '}
+          {chatInstance ? chatInstance?.currentUser.id : null}
+        </Text>
+      </View>
+      <Button title="Start Init" onPress={init} />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+    margin: 32,
+    paddingHorizontal: 10,
   },
   sectionTitle: {
     fontSize: 24,
@@ -107,8 +95,9 @@ const styles = StyleSheet.create({
   },
   sectionDescription: {
     marginTop: 8,
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '400',
+    textAlign: 'center',
   },
   highlight: {
     fontWeight: '700',
